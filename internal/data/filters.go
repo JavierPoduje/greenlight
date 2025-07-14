@@ -1,6 +1,10 @@
 package data
 
-import "greenlight.javier.net/internal/validator"
+import (
+	"strings"
+
+	"greenlight.javier.net/internal/validator"
+)
 
 type Filters struct {
 	Page         int
@@ -18,4 +22,26 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 
 	// Check that the sort parameter matches a value in the safelist.
 	v.Check(validator.PermittedValue(f.Sort, f.SortSafeList...), "sort", "invalid sort value")
+}
+
+func (f Filters) sortColumn() string {
+	// this could replace the code below, but I'll keep it like it is in the book
+	// if slices.Contains(f.SortSafeList, f.Sort) {
+	// 	return strings.TrimPrefix(f.Sort, "-")
+	// }
+
+	for _, safeValue := range f.SortSafeList {
+		if f.Sort == safeValue {
+			return strings.TrimPrefix(f.Sort, "-")
+		}
+	}
+
+	panic("unsafe sort parameter: " + f.Sort)
+}
+
+func (f Filters) sortDirection() string {
+	if strings.HasPrefix(f.Sort, "-") {
+		return "DESC"
+	}
+	return "ASC"
 }
