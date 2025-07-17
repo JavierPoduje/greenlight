@@ -148,7 +148,11 @@ func (app *application) readInt(
 }
 
 func (app *application) background(fn func()) {
+	app.wg.Add(1)
+
 	go func() {
+		defer app.wg.Done()
+
 		defer func() {
 			pv := recover()
 			if pv != nil {
