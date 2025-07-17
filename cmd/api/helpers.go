@@ -146,3 +146,16 @@ func (app *application) readInt(
 
 	return i
 }
+
+func (app *application) background(fn func()) {
+	go func() {
+		defer func() {
+			pv := recover()
+			if pv != nil {
+				app.logger.Error(fmt.Sprintf("%v", pv))
+			}
+		}()
+
+		fn()
+	}()
+}
