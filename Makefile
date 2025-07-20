@@ -10,11 +10,9 @@ help:
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/  /'
 
-
 .PHONY: confirm
 confirm:
 	@echo -n 'Are you sure? [y/N] ' && read ans && [ $${ans:-N} = y ]
-
 
 # ==================================================================================== #
 # DEVELOPMENT
@@ -25,19 +23,16 @@ confirm:
 run/api:
 	go run ./cmd/api -db-dsn=${GREENLIGHT_DB_DSN}
 
-
 ## db/psql: connect to the database using psql
 .PHONY: db/psql
 db/psql:
 	psql ${GREENLIGHT_DB_DSN}
-
 
 ## db/migrations/new name=$1: create a new database migration
 .PHONY: db/migrations/new
 db/migrations/new:
 	@echo 'Creating migration file...'
 	migrate create -seq -ext .sql -dir ./migrations ${name}
-
 
 ## db/migrations/up: apply all up database migrations
 .PHONY: db/migrations/up
@@ -60,7 +55,6 @@ tidy:
 	go mod vendor
 	@echo 'Formatting .go files...'
 	go fmt ./...
-
 
 ## audit: run quality control checks
 .PHONY: audit
@@ -97,3 +91,10 @@ production_host_ip = '161.35.71.158'
 .PHONY: production/connect
 production/connect:
 	ssh greenlight@${production_host_ip}
+
+## production/deploy/api: deploy the api to production
+.PHONY: production/deploy/api
+production/deploy/api:
+	rsync -P ./bin/linux_amd64/api greenlight@${production_host_ip}:~
+	rsync -rP --delete ./migrations greenlight@${production_host_ip}:~
+	ssh -t greenlight@${production_host_ip} 'migrate -path ~/migrations -database $$GREENLIGHT_DB_DSN up'
