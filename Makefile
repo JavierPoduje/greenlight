@@ -1,5 +1,8 @@
 include .envrc
 
+# ==================================================================================== #
+# HELPERS
+# ==================================================================================== #
 
 ## help: print this help message
 .PHONY: help
@@ -12,6 +15,10 @@ help:
 confirm:
 	@echo -n 'Are you sure? [y/N] ' && read ans && [ $${ans:-N} = y ]
 
+
+# ==================================================================================== #
+# DEVELOPMENT
+# ==================================================================================== #
 
 ## run/api: Run the cmd/api application
 .PHONY: run/api
@@ -37,3 +44,29 @@ db/migrations/new:
 db/migrations/up: confirm
 	@echo 'Running up migrations...'
 	migrate -path ./migrations -database ${GREENLIGHT_DB_DSN} up
+
+
+# ==================================================================================== #
+# QUALITY CONTROL
+# ==================================================================================== #
+
+## tidy: tidy module dependencies and format all .go files
+.PHONE: tidy
+tidy:
+	@echo 'Tidying module dependencies...'
+	go mod tidy
+	@echo 'Formatting .go files...'
+	go fmt ./...
+
+
+## audit: run quality control checks
+.PHONY: audit
+audit:
+	@echo 'Checking module dependencies...'
+	go mod tidy -diff
+	go mod verify
+	@echo 'Vetting code...'
+	go vet ./...
+	go tool staticcheck ./...
+	@echo 'Running tests...'
+	go test -race -vet=off ./...
